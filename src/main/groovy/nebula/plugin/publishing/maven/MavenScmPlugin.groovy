@@ -15,7 +15,7 @@
  */
 package nebula.plugin.publishing.maven
 
-import groovy.transform.CompileDynamic
+
 import nebula.plugin.info.scm.GitScmProvider
 import nebula.plugin.info.scm.ScmInfoExtension
 import nebula.plugin.info.scm.ScmInfoPlugin
@@ -110,7 +110,7 @@ class MavenScmPlugin implements Plugin<Project> {
         origin.map { String value -> calculateUrl(value, Logging.getLogger(MavenScmPlugin)) }
     }
 
-    static final GIT_PATTERN = /((git|ssh|https?):(\/\/))?(\w+@)?([\w\.@\\/\-~]+)([\:\\/])([\w\.@\:\/\-~]+)(\.git)(\/)?/
+    static final GIT_PATTERN = /^((git|ssh|https?):\/\/)?((\S+)@)?(?<host>\S+?)[:\/](?<repo>\S+?)(\.git)?\/?$/
 
     /**
      * Converts a Git origin such as {@code git@github.com:team/library.git} to
@@ -124,11 +124,10 @@ class MavenScmPlugin implements Plugin<Project> {
         calculateUrl(origin, project.logger)
     }
 
-    @CompileDynamic
     private static String calculateUrl(String origin, Logger logger) {
         def m = origin =~ GIT_PATTERN
-        if (m) {
-            return "https://${m[0][5]}/${m[0][7]}"
+        if (m.matches()) {
+            return "https://${m.group("host")}/${m.group("repo")}"
         } else {
             logger.warn("Unable to convert $origin to https form in MavenScmPlugin. Using original value.")
             return origin
